@@ -2,7 +2,7 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var uuid = require('uuid');
 var app = express();
-var port = 3000;
+var port = process.argv[2];
 var Blockchain = require('./blockchain')
 
 var bitcoin = new Blockchain();
@@ -44,6 +44,18 @@ app.get('/mine', function(req, res){
 
 });
 
-app.listen(3000, function(){
+app.post('/register-and-broadcast-node', function(req, res){
+    const newNodeUrl = req.body.newNodeUrl;
+});
+
+app.post('/register-node', function(req, res){
+
+});
+
+app.post('/register-bulk-nodes', function(req, res){
+
+});
+
+app.listen(port, function(){
     console.log(`Port running on ${port}`)
 });
