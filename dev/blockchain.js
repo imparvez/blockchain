@@ -1,12 +1,12 @@
 const sha256 = require('sha256')
-const currentNodeURL = process.argv[3];
+const currentNodeUrl = process.argv[3];
 /**
  * Blockchain constructor function will help in creating data structure
  */
 function Blockchain(){
 	this.chain = []; // It will contain all the blocks
 	this.pendingTransactions = []; // It will contain all the records of new transactions before being pushed to `this.chain` a.k.a in to the block
-	this.currentNodeURL = currentNodeURL;
+	this.currentNodeUrl = currentNodeUrl;
 	this.networkNodes = [];
 	// Creating the Genesis Block -> The first block in the block chain
 	this.createNewBlock(100, '0', '0');
