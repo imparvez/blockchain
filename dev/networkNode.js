@@ -1,14 +1,14 @@
-var express = require('express');
-var bodyParser = require('body-parser');
-var uuid = require('uuid');
-var app = express();
-var request = require('request');
-var rp = require('request-promise');
-var port = process.argv[2];
-var Blockchain = require('./blockchain')
+const express = require('express');
+const bodyParser = require('body-parser');
+const uuid = require('uuid/v1');
+const app = express();
+const request = require('request');
+const rp = require('request-promise');
+const port = process.argv[2];
+const Blockchain = require('./blockchain')
 
-var bitcoin = new Blockchain();
-var nodeAddress = uuid().split('-').join('');
+const bitcoin = new Blockchain();
+const nodeAddress = uuid().split('-').join('');
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
 
@@ -18,11 +18,34 @@ app.get('/blockchain', function(req, res){
 });
 
 // To initiate any transaction
-app.post('/transaction', function(req, res){
-    // console.log(req.body);
-    // res.send(`The amount of transaction is ${req.body.amount}`);
-    const bitcoinIndex = bitcoin.createNewTransaction(req.body.amount, req.body.sender, req.body.recipient);
-    res.json({ note: `Transaction will be added in block ${bitcoinIndex}`})
+app.post('/transaction', function(req, res) {
+	const newTransaction = req.body;
+	const blockIndex = bitcoin.addTransactionToPendingTransactions(newTransaction);
+	res.json({ note: `Transaction will be added in block ${blockIndex}.` });
+});
+
+// An API Endpoint which will now do the /transaction api's operation + broadcast the transaction in the network
+// broadcast transaction
+app.post('/transaction/broadcast', function(req, res) {
+	const newTransaction = bitcoin.createNewTransaction(req.body.amount, req.body.sender, req.body.recipient);
+	bitcoin.addTransactionToPendingTransactions(newTransaction);
+
+	const requestPromises = [];
+	bitcoin.networkNodes.forEach(networkNodeUrl => {
+		const requestOptions = {
+			uri: networkNodeUrl + '/transaction',
+			method: 'POST',
+			body: newTransaction,
+			json: true
+		};
+
+		requestPromises.push(rp(requestOptions));
+	});
+
+	Promise.all(requestPromises)
+	.then(data => {
+		res.json({ note: 'Transaction created and broadcast successfully.' });
+	});
 });
 
 // It will mine or create a new block for us
@@ -36,14 +59,68 @@ app.get('/mine', function(req, res){
     const nonce = bitcoin.proofOfWork(previousBlockHash, currentData);
     const blockHash = bitcoin.hashBlock(previousBlockHash, currentData, nonce);
 
-    bitcoin.createNewTransaction(12.5, "00", nodeAddress);
+    // bitcoin.createNewTransaction(12.5, "00", nodeAddress);
 
     const newBlock = bitcoin.createNewBlock(nonce, previousBlockHash, blockHash);
-    res.json({
-        note: "New block mined successfully",
-        block: newBlock
+
+    const requestPromises = [];
+	bitcoin.networkNodes.forEach(networkNodeUrl => {
+		const requestOptions = {
+			uri: networkNodeUrl + '/receive-new-block',
+			method: 'POST',
+			body: { newBlock: newBlock },
+			json: true
+		};
+
+		requestPromises.push(rp(requestOptions));
+	});
+
+	Promise.all(requestPromises)
+	.then(data => {
+		const requestOptions = {
+			uri: bitcoin.currentNodeUrl + '/transaction/broadcast',
+			method: 'POST',
+			body: {
+                amount: 12.5,
+                sender: "00",
+                recipient: nodeAddress
+            },
+			json: true
+        };
+        
+        return rp(requestOptions);
+    })
+    .then(data => {
+        res.json({
+            note: "New block mined & broadcast successfully",
+            block: newBlock
+        })
     })
 
+});
+
+// receive new block
+app.post('/receive-new-block', function(req, res) {
+	const newBlock = req.body.newBlock; // Get new block to be added
+    const lastBlock = bitcoin.getLastBlock(); // Get the last block
+    
+    // Validation
+	const correctHash = lastBlock.hash === newBlock.previousBlockHash; // Check if last block previous hash value equals to new block hash value
+	const correctIndex = lastBlock['index'] + 1 === newBlock['index']; // Check if last block index + 1 equals to new block index
+
+	if (correctHash && correctIndex) {
+		bitcoin.chain.push(newBlock);
+		bitcoin.pendingTransactions = [];
+		res.json({
+			note: 'New block received and accepted.',
+			newBlock: newBlock
+		});
+	} else {
+		res.json({
+			note: 'New block rejected.',
+			newBlock: newBlock
+		});
+	}
 });
 
 app.post('/register-and-broadcast-node', function(req, res){
