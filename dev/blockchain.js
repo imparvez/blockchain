@@ -115,3 +115,18 @@ Blockchain.prototype.chainIsValid = function(blockchain){
 };
 
 module.exports = Blockchain;
+
+/*
+What is consensus algorithm?
+It is a way for all of the nodes inside the network to agree upon what the correct data is inside of the blockchain.
+
+Our consensus algorithm will check for the length of the chain in the chosen node with all the others chain in the network node.
+
+Longest chain contain final number of blocks, and those block are mined block which is the result of proof of work.
+
+The whole network contributed to longest chain.
+
+Consensus algorithm uses longest chain rule.
+
+Bitcoin uses the same algorithm.
+*/
