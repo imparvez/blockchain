@@ -98,6 +98,20 @@ Blockchain.prototype.proofOfWork = function(previousBlockHash, currentData){
 	}
 
 	return nonce; // will return the number of iteration to generate the correct hash
-}
+};
+
+// This method will return if the blockchain is valid or not
+Blockchain.prototype.chainIsValid = function(blockchain){
+	let validChain = true;
+
+	for(var i = 1; i < blockchain.length; i++){
+		var currentBlock = blockchain[i];
+		var prevBlock = blockchain[i - 1];
+
+		if(currentBlock['previousBlockHash'] !== prevBlock['hash']) validChain = false; // indicating chain is not valid
+	}
+
+	return validChain
+};
 
 module.exports = Blockchain;
