@@ -100,16 +100,35 @@ Blockchain.prototype.proofOfWork = function(previousBlockHash, currentData){
 	return nonce; // will return the number of iteration to generate the correct hash
 };
 
-// This method will return if the blockchain is valid or not
+// This method will return if this blockchain is valid or not
 Blockchain.prototype.chainIsValid = function(blockchain){
 	let validChain = true;
 
 	for(var i = 1; i < blockchain.length; i++){
-		var currentBlock = blockchain[i];
-		var prevBlock = blockchain[i - 1];
-
+		console.log('blockchain => ' + blockchain);
+		const currentBlock = blockchain[i];
+		const prevBlock = blockchain[i - 1];
+		const blockHash = this.hashBlock(prevBlock['hash'], { transactions: currentBlock['transactions'], index: currentBlock['index'] } , currentBlock['nonce'])
+		// Step 2: Checking if the current blockchain has the same data while re-hashing and starting with `0000`
+		if(blockHash.substring(0,4) !== '0000' ) validChain = false;
+		
+		// Step 1: Checking if the current blockchain and previous blockchain shared the same hash and previousHash value respectively
 		if(currentBlock['previousBlockHash'] !== prevBlock['hash']) validChain = false; // indicating chain is not valid
+
+		console.log('-----------------------------------');
+		console.log('currentBlockHash => ', currentBlock['hash']);
+		console.log('previousBlockHash => ', prevBlock['hash']);
+		console.log('-----------------------------------');
 	}
+
+	// Validating Legitimate Genesis Block
+	const genesisBlock = blockchain[0];
+	const correctNonce = genesisBlock['nonce'] === 100; // this.createNewBlock(100, '0', '0');
+	const correctPreviousBlockHash = genesisBlock['previousBlockHash'] === '0';
+	const correctHash = genesisBlock['hash'] === '0';
+	const correctTransactions = genesisBlock['transactions'].length === 0;
+
+	if(!correctNonce || !correctPreviousBlockHash || !correctHash || !correctTransactions) validChain = false
 
 	return validChain
 };
@@ -119,14 +138,9 @@ module.exports = Blockchain;
 /*
 What is consensus algorithm?
 It is a way for all of the nodes inside the network to agree upon what the correct data is inside of the blockchain.
-
 Our consensus algorithm will check for the length of the chain in the chosen node with all the others chain in the network node.
-
 Longest chain contain final number of blocks, and those block are mined block which is the result of proof of work.
-
 The whole network contributed to longest chain.
-
 Consensus algorithm uses longest chain rule.
-
 Bitcoin uses the same algorithm.
 */
