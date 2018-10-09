@@ -165,6 +165,30 @@ app.post('/register-and-broadcast-node', function(req, res){
     });
 });
 
+/*
+	How to run /register-and-broadcast-node
+	http://localhost:3001/register-and-broadcast-node => POST
+
+	{
+		"newNodeUrl": "http://localhost:3002"
+	} // SUBMIT
+
+	{
+		"newNodeUrl": "http://localhost:3003"
+	} // SUBMIT
+
+	{
+		"newNodeUrl": "http://localhost:3004"
+	} // SUBMIT
+
+	{
+		"newNodeUrl": "http://localhost:3005"
+	} // SUBMIT
+
+	http://localhost:3001/blockchain
+	All the nodes will be registered.
+*/
+
 // Register a node with the network
 /*
 * Any node hitting this end point, will register the new requested node with the node that recieves this request.
@@ -192,4 +216,93 @@ app.post('/register-bulk-nodes', function(req, res){
 
 app.listen(port, function(){
     console.log(`Port running on ${port}`)
+});
+
+// app.get('/consensus', function(req, res) {
+// 	const requestPromises = [];
+// 	bitcoin.networkNodes.forEach(networkNodeUrl => { //Running function across network to fetch blockchain from all the node.
+// 		const requestOptions = {
+// 			uri: networkNodeUrl + '/blockchain', // Accessing blockchain hosted on each network
+// 			method: 'GET',
+// 			json: true
+// 		};
+// 		requestPromises.push(rp(requestOptions));
+// 		console.log('requestPromises => ' + requestPromises)
+// 		Promise.all(requestPromises) // Running all the request, now we have responses of all the network node.
+// 		.then(blockchains => { // checking each blockchain's length in a network with the current one.
+// 			console.log('blockchains => ', blockchains);
+// 			const currentChainLength = bitcoin.chain.length;
+// 			let maxChainLength = currentChainLength;
+// 			let newLongestChain = null;
+// 			let newPendingTransactions = null;
+// 			blockchains.forEach(blockchain => {
+// 				if(blockchain.chain.length > maxChainLength){
+// 					maxChainLength = bitcoin.chain.length;
+// 					newLongestChain = bitcoin.chain;
+// 					newPendingTransactions = bitcoin.pendingTransactions;
+// 				}
+// 			});
+// 			// What if there is no change.
+// 			// if(there is no longest chain OR there is a longest chain but not valid) run this
+// 			if(!newLongestChain || (newLongestChain && !bitcoin.chainIsValid(newLongestChain))){
+// 				res.json({
+// 					note: 'Current chain has not been replaced',
+// 					chain: bitcoin.chain
+// 				})
+// 			// if(there is longest chain OR that chain valid) run this
+// 			} else {
+// 				bitcoin.chain = newLongestChain;
+// 				bitcoin.pendingTransactions = newPendingTransactions;
+// 				res.json({
+// 					note: 'This chain has been replaced',
+// 					chain: bitcoin.chain
+// 				})
+// 			}
+// 		});
+// 	})
+// });
+
+app.get('/consensus', function(req, res) {
+	const requestPromises = [];
+	bitcoin.networkNodes.forEach(networkNodeUrl => {
+		const requestOptions = {
+			uri: networkNodeUrl + '/blockchain',
+			method: 'GET',
+			json: true
+		};
+
+		requestPromises.push(rp(requestOptions));
+	});
+
+	Promise.all(requestPromises)
+	.then(blockchains => {
+		const currentChainLength = bitcoin.chain.length;
+		let maxChainLength = currentChainLength;
+		let newLongestChain = null;
+		let newPendingTransactions = null;
+
+		blockchains.forEach(blockchain => {
+			if (blockchain.chain.length > maxChainLength) {
+				maxChainLength = blockchain.chain.length;
+				newLongestChain = blockchain.chain;
+				newPendingTransactions = blockchain.pendingTransactions;
+			};
+		});
+
+
+		if (!newLongestChain || (newLongestChain && !bitcoin.chainIsValid(newLongestChain))) {
+			res.json({
+				note: 'Current chain has not been replaced.',
+				chain: bitcoin.chain
+			});
+		}
+		else {
+			bitcoin.chain = newLongestChain;
+			bitcoin.pendingTransactions = newPendingTransactions;
+			res.json({
+				note: 'This chain has been replaced.',
+				chain: bitcoin.chain
+			});
+		}
+	});
 });
