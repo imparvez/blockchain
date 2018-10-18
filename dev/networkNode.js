@@ -214,54 +214,6 @@ app.post('/register-bulk-nodes', function(req, res){
 	res.json({ note: 'Bulk registration successful.' });
 });
 
-app.listen(port, function(){
-    console.log(`Port running on ${port}`)
-});
-
-// app.get('/consensus', function(req, res) {
-// 	const requestPromises = [];
-// 	bitcoin.networkNodes.forEach(networkNodeUrl => { //Running function across network to fetch blockchain from all the node.
-// 		const requestOptions = {
-// 			uri: networkNodeUrl + '/blockchain', // Accessing blockchain hosted on each network
-// 			method: 'GET',
-// 			json: true
-// 		};
-// 		requestPromises.push(rp(requestOptions));
-// 		console.log('requestPromises => ' + requestPromises)
-// 		Promise.all(requestPromises) // Running all the request, now we have responses of all the network node.
-// 		.then(blockchains => { // checking each blockchain's length in a network with the current one.
-// 			console.log('blockchains => ', blockchains);
-// 			const currentChainLength = bitcoin.chain.length;
-// 			let maxChainLength = currentChainLength;
-// 			let newLongestChain = null;
-// 			let newPendingTransactions = null;
-// 			blockchains.forEach(blockchain => {
-// 				if(blockchain.chain.length > maxChainLength){
-// 					maxChainLength = bitcoin.chain.length;
-// 					newLongestChain = bitcoin.chain;
-// 					newPendingTransactions = bitcoin.pendingTransactions;
-// 				}
-// 			});
-// 			// What if there is no change.
-// 			// if(there is no longest chain OR there is a longest chain but not valid) run this
-// 			if(!newLongestChain || (newLongestChain && !bitcoin.chainIsValid(newLongestChain))){
-// 				res.json({
-// 					note: 'Current chain has not been replaced',
-// 					chain: bitcoin.chain
-// 				})
-// 			// if(there is longest chain OR that chain valid) run this
-// 			} else {
-// 				bitcoin.chain = newLongestChain;
-// 				bitcoin.pendingTransactions = newPendingTransactions;
-// 				res.json({
-// 					note: 'This chain has been replaced',
-// 					chain: bitcoin.chain
-// 				})
-// 			}
-// 		});
-// 	})
-// });
-
 app.get('/consensus', function(req, res) {
 	const requestPromises = [];
 	bitcoin.networkNodes.forEach(networkNodeUrl => {
@@ -305,4 +257,32 @@ app.get('/consensus', function(req, res) {
 			});
 		}
 	});
+});
+
+app.get('/block/:blockHash', function(req, res){ // localhost:3001/block/hashValue012564657
+	const blockHash = req.params.blockHash; // hashValue012564657
+	const correctBlock = bitcoin.getBlock(blockHash);
+	res.json({
+		block: correctBlock
+	});
+});
+
+/*
+> Run all the node in the network
+> On any node, make some block using /mine. So for example, http://localhost:3001/mine (3 times)
+> Now hit http://localhost:3001/blockchain, you will see all the latest block in the chain.
+> Take any block's hashValue and hit the newly updated url http://localhost:3001/block/0000e5419ad3a242c755aebb149883ac6e647f17732d8370b09274023588a726
+> You will be presented with a json of that respective block
+*/
+
+app.get('/transaction/:transactionId', function(req, res){
+
+});
+
+app.get('/address/:address', function(req, res){
+
+});
+
+app.listen(port, function(){
+    console.log(`Port running on ${port}`)
 });

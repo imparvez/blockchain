@@ -144,3 +144,16 @@ The whole network contributed to longest chain.
 Consensus algorithm uses longest chain rule.
 Bitcoin uses the same algorithm.
 */
+
+/*
+This function will iterate through our blockchain and pull out the block chain which matches the provided hash code.
+*/
+Blockchain.prototype.getBlock = function(blockHash){
+	let correctBlock = null;
+	// cycle through every block in the chain
+	this.chain.forEach(block => {
+		if(block.hash === blockHash) correctBlock = block
+	});
+
+	return correctBlock;
+}
