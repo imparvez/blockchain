@@ -259,6 +259,13 @@ app.get('/consensus', function(req, res) {
 	});
 });
 
+/*
+> Run all the node in the network
+> On any node, make some block using /mine. So for example, http://localhost:3001/mine (3 times)
+> Now hit http://localhost:3001/blockchain, you will see all the latest block in the chain.
+> Take any block's hashValue and hit the newly updated url http://localhost:3001/block/0000e5419ad3a242c755aebb149883ac6e647f17732d8370b09274023588a726
+> You will be presented with a json of that respective block
+*/
 app.get('/block/:blockHash', function(req, res){ // localhost:3001/block/hashValue012564657
 	const blockHash = req.params.blockHash; // hashValue012564657
 	const correctBlock = bitcoin.getBlock(blockHash);
@@ -267,16 +274,28 @@ app.get('/block/:blockHash', function(req, res){ // localhost:3001/block/hashVal
 	});
 });
 
+
 /*
 > Run all the node in the network
-> On any node, make some block using /mine. So for example, http://localhost:3001/mine (3 times)
-> Now hit http://localhost:3001/blockchain, you will see all the latest block in the chain.
-> Take any block's hashValue and hit the newly updated url http://localhost:3001/block/0000e5419ad3a242c755aebb149883ac6e647f17732d8370b09274023588a726
-> You will be presented with a json of that respective block
+> Use postman to make transaction on http://localhost:3001/transaction/broadcast/
+{
+	"amount": 4897,
+	"sender": "RUS",
+	"recipient": "YEN"
+}
+> Make two request, run /mine on localhost:3001
+> Make some more transaction and run /mine on localhost:3001
+> Make some more transaction and run /mine on localhost:3001
+> Then  copy any of the transactionId and hit the url http:localhost:3001/transaction/<copiedTransactionId>
+> You will see the result.
 */
-
 app.get('/transaction/:transactionId', function(req, res){
-
+	const transactionId = req.params.transactionId;
+	const transactionData = bitcoin.getTransaction(transactionId);
+	res.json({
+		transaction: transactionData.transaction,
+		block: transactionData.block
+	})
 });
 
 app.get('/address/:address', function(req, res){
