@@ -307,6 +307,12 @@ app.get('/address/:address', function(req, res) {
 	});
 });
 
+// Creating an end point to server html page. HOME
+app.get('/block-explorer', function(req, res){
+	res.sendFile('./block-explorer/index.html', { root: __dirname});
+})
+
+
 app.listen(port, function(){
     console.log(`Port running on ${port}`)
 });
