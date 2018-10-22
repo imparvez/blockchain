@@ -133,8 +133,6 @@ Blockchain.prototype.chainIsValid = function(blockchain){
 	return validChain
 };
 
-module.exports = Blockchain;
-
 /*
 What is consensus algorithm?
 It is a way for all of the nodes inside the network to agree upon what the correct data is inside of the blockchain.
@@ -179,3 +177,30 @@ Blockchain.prototype.getTransaction = function(transactionId){
 		block: correctBlock
 	}
 }
+
+/*
+* This function will iterate through our blockchain and pull out the block chain which matches the provided address.
+*/
+Blockchain.prototype.getAddressData = function(address) {
+	const addressTransactions = [];
+	this.chain.forEach(block => {
+		block.transactions.forEach(transaction => {
+			if(transaction.sender === address || transaction.recipient === address) {
+				addressTransactions.push(transaction);
+			};
+		});
+	});
+
+	let balance = 0;
+	addressTransactions.forEach(transaction => {
+		if (transaction.recipient === address) balance += transaction.amount;
+		else if (transaction.sender === address) balance -= transaction.amount;
+	});
+
+	return {
+		addressTransactions: addressTransactions,
+		addressBalance: balance
+	};
+};
+
+module.exports = Blockchain;
